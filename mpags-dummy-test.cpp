@@ -30,17 +30,22 @@ int main(int argc, char* argv[]) {
     bool version_called{false};
     bool input_called(false);
     bool output_called{false};
+    bool print_verify{false};
+    bool print_called{false};
     std::string input_name{""};
     std::string output_name{""};
     for (int i{0}; i < CLI_control.size(); i++) {
         if (CLI_control[i] == "-h" || CLI_control[i] == "--help") {
-            if (help_called == false) {std::cout<<"mpags-cipher is an executable which applies a simple ciper to the content of a specified input .txt file, returning a ciphered output .txt file.\n Command line inputs to call alongside this executable are:\n"<<std::endl;}
+            if (help_called == false) {std::cout<<"mpags-cipher is an executable which applies a simple ciper to the content of a specified input .txt file, returning a ciphered output .txt file.\n Command line inputs to call alongside this executable are: -h/--help, -p/--print, -v/--version, -i/--intput, -o/--output\n"<<std::endl;}
             if (help_called) {std::cout<<"--help/-h functionality already called: ignoring excess calls of this function"<<std::endl;}
             help_called = true;
         } else if (CLI_control[i] == "-v" || CLI_control[i] == "--version") {
             if (version_called == false) {std::cout<<"The version of mpags-cipher being called is version XXXX"<<std::endl;}
             if (version_called) {std::cout<<"--version/-v functionality already called: ignoring excess calls of this function"<<std::endl;}
             version_called = true;
+        } else if (CLI_control[i] == "-p" || CLI_control[i] == "--print") {
+            print_verify = true;
+            print_called = true;
         } else if (CLI_control[i] == "-i" || CLI_control[i] == "--input") {
             //ADD FUNCITONALITY FOR NULL FILLING AFTER -i
             if (input_called == false) {input_name = CLI_optionality[i];}
@@ -72,9 +77,7 @@ int main(int argc, char* argv[]) {
     size_t dot_pos_output = output_name.find_last_of('.');
     if (dot_pos_input != std::string::npos) { //test input is of .txt type
         std::string input_type = input_name.substr(dot_pos_input);
-        if (input_type == ".txt") {
-            std::cout<<"\nSearching for input: "<<input_name<<"."<<std::endl;
-        } else {
+        if (input_type != ".txt") {
             std::cout<<"ERROR: input file not of type .txt"<<std::endl;
             return 0;
         }
@@ -84,9 +87,7 @@ int main(int argc, char* argv[]) {
     }
     if (dot_pos_output != std::string::npos) { //test output is of .txt type
         std::string output_type = output_name.substr(dot_pos_output);
-        if (output_type == ".txt") {
-            std::cout<<"Searching for output: "<<output_name<<"."<<std::endl;
-        } else {
+        if (output_type != ".txt") {
             std::cout<<"ERROR: output file not of type .txt"<<std::endl;
             return 0;
         }
@@ -100,7 +101,7 @@ int main(int argc, char* argv[]) {
     std::string cipher_input{""};
     std::string file_line{""};
     if (!inputFile) {
-        std::cout<<"ERROR: input file name unrecognised, please ensure it is in the format: input.txt"<<std::endl;
+        std::cout<<"ERROR: input file name unrecognised, please ensure the file name is correct and it is in the .txt format"<<std::endl;
         return 0;
     } else {
         while (std::getline(inputFile,file_line)) {
@@ -110,12 +111,13 @@ int main(int argc, char* argv[]) {
     }
     //Return error if input is empty
     if (cipher_input == "") {"ERROR: input file provided no cipher input to act on"; return 0;}
-    //Return warning and ask for verification if output file has content
-    std::ifstream outputFile(output_name);
+
+    //Return warning and ask for verification if output file exists
+    std::ifstream outputFileTest(output_name);
     char choice;
     bool overwrite_trigger{true};
-    if (outputFile) {
-        std::cout<<"WARNING: existant output file of the same name. Do you wish to overwrite this file [y/n]?"<<std::endl;
+    if (outputFileTest) {
+        std::cout<<"WARNING: existant output file of the same name ("<<output_name<<"). Do you wish to overwrite this file [y/n]?"<<std::endl;
         std::cin >> choice;
         while (overwrite_trigger) {
             if (choice == 'y' || choice == 'Y') {
@@ -130,10 +132,10 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    outputFile.close();
+    outputFileTest.close();
     //Read input file #################################################################################################################################################################################
     //Apply cipher alterations#########################################################################################################################################################################
-    std::cout<<"\nUnaltered cipher input is:\n"<<cipher_input<<std::endl;
+    if (print_verify) {std::cout<<"\nUnaltered cipher input is:\n"<<cipher_input<<std::endl;}
     //Apply cipher alterations#########################################################################################################################################################################
     //ignore non-alpha numeric
     std::string cipher_output{""};
@@ -175,9 +177,14 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    //capitalize
-    //convert numbers to 
     //Send to output file##############################################################################################################################################################################
-    std::cout<<"\nAltered cipher output is:\n"<<cipher_output<<std::endl;
+    if (print_verify) {std::cout<<"\nAltered cipher output is:\n"<<cipher_output<<std::endl;}
+    //Send to output file##############################################################################################################################################################################
+    std::ofstream outputFile(output_name);
+    if (outputFile.is_open()) { 
+        outputFile.write(cipher_output.c_str(),cipher_output.size());
+        outputFile.close();
+    }
+    return 0;
     //Send to output file##############################################################################################################################################################################
 }
